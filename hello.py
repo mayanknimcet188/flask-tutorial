@@ -7,6 +7,7 @@ from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -17,7 +18,7 @@ app.config['SECRET_KEY'] = 'ramanujan1729!'
 db = SQLAlchemy(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
-
+migrate = Migrate(app, db)
 #models
 class Role(db.Model):
     __tablename__ = 'roles'
