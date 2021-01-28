@@ -8,17 +8,34 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_migrate import Migrate
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir,'data.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'ramanujan1729!'
+app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['BLOGLY_MAIL_SUBJECT_PREFIX'] = '[BLOGLY]'
+app.config['FLASK_MAIL_SENDER'] = 'Blogly Admin <mayank.nimcet.188@gmail.com>'
+app.config['BLOGLY_ADMIN'] = os.environ.get('BLOGLY_ADMIN')
 
 db = SQLAlchemy(app)
 bootstrap = Bootstrap(app)
 moment = Moment(app)
 migrate = Migrate(app, db)
+mail = Mail(app)
+
+def send_mail(to,subject,template,**kwargs):
+    msg=Message(app.config['BLOGLY_MAIL_SUBJECT_PREFIX']+subject,sender=app.config['FLASK_MAIL_SENDER'],recipients=[to])
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template + '.html', **kwargs)
+    mail.send(msg)
+
 #models
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -48,9 +65,11 @@ def index():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.name.data).first()
         if user is None:
-            user = User(name=form.name.data)
-            db.session.add()
+            user = User(username=form.name.data)
+            db.session.add(user)
             db.session.commit()
+            if app.config['BLOGLY_ADMIN']:
+                send_mail(app.config['BLOGLY_ADMIN'],'New User','mail/new_user',user=user)
             session['known']=False
         else:
             session['known'] = True
