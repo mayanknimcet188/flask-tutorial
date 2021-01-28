@@ -23,7 +23,7 @@ class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(64),unique=True)
-    users = db.relationship('User',backref='role',lazu='dynamic')
+    users = db.relationship('User',backref='role',lazy='dynamic')
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -70,3 +70,7 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+@app.shell_context_processor
+def make_shell_context():
+    return dict(db=db,User=User,Role=Role)
